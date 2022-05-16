@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Permanent+Marker&family=Righteous&display=swap" rel="stylesheet">
+
+        
+
+        <!-- Jquery -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+        <script>
+            $(function(){
+
+                //difficulty is easy,medium, or hard
+                var p = sudoku.generate("easy");
+                var k = sudoku.solve(p);
+                console.log("Key: ", k);
+                console.log("Puzzle: ", p);
+
+                //answers is a plain array of answers, including given values.
+                var answers = [];
+                for (const item in k) {
+                    if (item in p){
+                        answers.push(parseInt(k[item]));
+                    }
+                    else {
+                        answers.push(0)
+                    }
+                }
+
+
+                function PuzzleGrid(puzzle_id) {
+                    var _id = 0 || puzzle_id;
+                    Object.defineProperty(this,"id", {
+                        get: function(){
+                            return _id;
+                        },
+                        set: function(val){
+                            if(val){
+                                _id = val;
+                            }
+                        }
+                    });
+
+                    var _boxes = [];
+                    Object.defineProperty(this,"boxes",{
+
+                        get: function(){
+                            return _boxes;
+                        },
+                        set: function(val){
+                            if(val){
+                                _boxes = val;
+                            }
+                        }
+                    });
+
+                    var _width = 97;
+                    Object.defineProperty(this,"width",{
+                        get:function(){
+                            return _width;
+                        },
+                        set:function(val){
+                            if(val){
+                                _width=val;
+                            }
+                        }
+                    })
+                    
+                    Object.defineProperty(this,"html", {
+                        get: function() { 
+                            return this.buildMarkup();
+                        }
+                    })
+
+                    var _selectedCell;
+                    Object.defineProperty(this,"selectedCell", {
+                        get: function() { return _selectedCell; },
+                        set: function(val) {
+                            if(val) {
+                                if(val != _selectedCell) { 
+                                    _selectedCell = val;
+                                    this.render();
+                                }
+                            }
+                        }
+                    });
+                    
+                    for(var i = 1; i <= 9; i++) {
+                        _boxes.push(new Box(this.id + "_" + i,this));
+                    }
+
+                    this.buildMarkup = function(){
+                        var style = "box-sizing:border-box; position:relative; width:" + this.width + "vw; height:" + this.width + "vw; padding-top:3; padding-left:3; border:black solid .5vw; background-color: black;";
+                        var opentag = "<div id='" + this.id + "' style='" + style + "'>"
+                        var contents = "";
+                        var closetag = "</div>";
+
+                        _boxes.forEach(function(box,index){
+                            contents += box.html;
+                        })
+
+                        
+                        return opentag + contents + closetag;
+                    }
+
+                    this.render = function() {
+                        let puzzlegrid = this.html;
+                        let controls = Controls.buildMarkup();
+
+                        $(document.body).html(puzzlegrid + controls);
+
+                        for(let i;i<=9;i++)
+                        {
+                            console.log(i + ": " + answers.filter(x => x === i).length);
+                        }
+                    }
+
+                    this.box = function(index) {
+                        return _boxes[index]; 
+                    }
+
+                    this.getBoxAndCell = function(row, col) {
+                        let box = 0;
+                        let cell = 0;
+
+                        switch (row) {
+                            case 0:
+                                switch(col){
+                                    case 0: box = 0; cell = 0; break;
+                                    case 1: box = 0; cell = 1; break;
+                                    case 2: box = 0; cell = 2; break;
+                                    case 3: box = 1; cell = 0; break;
+                                    case 4: box = 1; cell = 1; break;
+                                    case 5: box = 1; cell = 2; break;
+                                    case 6: box = 2; cell = 0; break;
+                                    case 7: box = 2; cell = 1; break;
+                                    case 8: box = 2; cell = 2; break;
+                                };
+                                break;
+                            case 1:
+                                switch(col){
+                                    case 0: box = 0; cell = 3; break;
+                                    case 1: box = 0; cell = 4; break;
+                                    case 2: box = 0; cell = 5; break;
+                                    case 3: box = 1; cell = 3; break;
+                                    case 4: box = 1; cell = 4; break;
+                                    case 5: box = 1; cell = 5; break;
+                                    case 6: box = 2; cell = 3; break;
+                                    case 7: box = 2; cell = 4; break;
+                                    case 8: box = 2; cell = 5; break;
+                                };
+                                break;
+                            case 2:
+                                switch(col){
+                                    case 0: box = 0; cell = 6; break;
+                                    case 1: box = 0; cell = 7; break;
+                                    case 2: box = 0; cell = 8; break;
+                                    case 3: box = 1; cell = 6; break;
+                                    case 4: box = 1; cell = 7; break;
+                                    case 5: box = 1; cell = 8; break;
+                                    case 6: box = 2; cell = 6; break;
+                                    case 7: box = 2; cell = 7; break;
+                                    case 8: box = 2; cell = 8; break;
+                                };
+                                break;
+                            case 3:
+                                switch(col){
+                                    case 0: box = 3; cell = 0; break;
+                                    case 1: box = 3; cell = 1; break;
+                                    case 2: box = 3; cell = 2; break;
+                                    case 3: box = 4; cell = 0; break;
+                                    case 4: box = 4; cell = 1; break;
+                                    case 5: box = 4; cell = 2; break;
+                                    case 6: box = 5; cell = 0; break;
+                                    case 7: box = 5; cell = 1; break;
+                                    case 8: box = 5; cell = 2; break;
+                                };
+                                break;
+                            case 4:
+                                switch(col){
+                                    case 0: box = 3; cell = 3; break;
+                                    case 1: box = 3; cell = 4; break;
+                                    case 2: box = 3; cell = 5; break;
+                                    case 3: box = 4; cell = 3; break;
+                                    case 4: box = 4; cell = 4; break;
+                                    case 5: box = 4; cell = 5; break;
+                                    case 6: box = 5; cell = 3; break;
+                                    case 7: box = 5; cell = 4; break;
+                                    case 8: box = 5; cell = 5; break;
+                                };
+                                break;
+                            case 5:
+                                switch(col){
+                                    case 0: box = 3; cell = 6; break;
+                                    case 1: box = 3; cell = 7; break;
+                                    case 2: box = 3; cell = 8; break;
+                                    case 3: box = 4; cell = 6; break;
+                                    case 4: box = 4; cell = 7; break;
+                                    case 5: box = 4; cell = 8; break;
+                                    case 6: box = 5; cell = 6; break;
+                                    case 7: box = 5; cell = 7; break;
+                                    case 8: box = 5; cell = 8; break;
+                                };
+                                break;
+                            case 6:
+                                switch(col){
+                                    case 0: box = 6; cell = 0; break;
+                                    case 1: box = 6; cell = 1; break;
+                                    case 2: box = 6; cell = 2; break;
+                                    case 3: box = 7; cell = 0; break;
+                                    case 4: box = 7; cell = 1; break;
+                                    case 5: box = 7; cell = 2; break;
+                                    case 6: box = 8; cell = 0; break;
+                                    case 7: box = 8; cell = 1; break;
+                                    case 8: box = 8; cell = 2; break;
+                                };
+                                break;
+                            case 7:
+                                switch(col){
+                                    case 0: box = 6; cell = 3; break;
+                                    case 1: box = 6; cell = 4; break;
+                                    case 2: box = 6; cell = 5; break;
+                                    case 3: box = 7; cell = 3; break;
+                                    case 4: box = 7; cell = 4; break;
+                                    case 5: box = 7; cell = 5; break;
+                                    case 6: box = 8; cell = 3; break;
+                                    case 7: box = 8; cell = 4; break;
+                                    case 8: box = 8; cell = 5; break;
+                                };
+                                break;
+                            case 8:
+                                switch(col){
+                                    case 0: box = 6; cell = 6; break;
+                                    case 1: box = 6; cell = 7; break;
+                                    case 2: box = 6; cell = 8; break;
+                                    case 3: box = 7; cell = 6; break;
+                                    case 4: box = 7; cell = 7; break;
+                                    case 5: box = 7; cell = 8; break;
+                                    case 6: box = 8; cell = 6; break;
+                                    case 7: box = 8; cell = 7; break;
+                                    case 8: box = 8; cell = 8; break;
+                                };
+                                break;
+                        }
+                    
+                        return {"box":box, "cell":cell};
+                        
+                    }
+                
+                    this.valueClicked = function (value) {
+                        if(this.selectedCell) {
+                            if(this.selectedCell.isGiven == true ){
+                                alert("You cannot change the value of this cell.");
+                            } else if(value>1 && answers.filter(x => x === value).length >= 9) {
+                                return;
+                            }
+                            else {
+                                if(Controls.addNotes && answers.filter(x => x === value).length <= 9) {
+                                    this.selectedCell.notes(value);
+                                }
+                                else {
+                                    this.selectedCell.value = value;
+                                }
+                            }
+                        }
+                        
+                    }
+                }
+
+                function Box(box_id,puzzle) {
+                    var _puzzle = puzzle;
+                    Object.defineProperty(this,"puzzle",{
+                        get: function() {
+                            return _puzzle;
+                        } 
+                    });
+
+                    var _id = box_id;
+                    Object.defineProperty(this,"id", {
+                        get: function(){
+                            return _id;
+                        },
+                        set: function(val){
+                            if(val){
+                                _id = val;
+                            }
+                        }
+                    });
+
+                    var _cells = [];
+                    Object.defineProperty(this,"cells",{
+                        get: function(){
+                            return _cells;
+                        },
+                        set: function(val){
+                            if(val){
+                                _cells = val;
+                            }
+                        }
+                    });
+                
+                    Object.defineProperty(this,"html", {
+                        get: function() { 
+                            return this.buildMarkup(); 
+                        }
+                    });
+
+                    this.buildMarkup = function() {
+                        var opentag = "<div id='" + this.id + "'  style='box-sizing:border-box; float:left; width:33.3%; height:33.3%; background-color: black; border-bottom:black solid 3px; border-right:black solid 3px;'>";
+                        var contents = "";
+                        var closetag = "</div>";  
+
+                        if (this.value > 0) {
+                            contents = "<div style='position: absolute; margin: 0; top: 50%; left: 50%; transform: translateX(-50%) translateY(-50%);'><p style='font-size:10vw;'>" + this.value + "</p></div>";
+                        } else {
+                            _cells.forEach(function(cell,index){
+                               contents += cell.html;
+                            });
+                        }
+
+                        return opentag + contents + closetag;
+                    }
+
+                    this.cell = function(index) {
+                        return _cells[index];
+                    }
+                
+                    for(var i = 1; i <= 9; i++) {
+                        var cellid = this.id + "_" + i; 
+                        var cell = new Cell(cellid, this);
+                        _cells.push(cell);
+                    }
+                }
+
+                function Cell(cell_id, box) {
+                    var _box = box;
+                    Object.defineProperty(this,"box",{
+                        get: function() {
+                            return _box;
+                        } 
+                    });
+
+                    Object.defineProperty(this,"puzzle",{
+                        get:function(){
+                            return this.box.puzzle;
+                        }
+                    })
+
+                    var _id = cell_id;
+                    Object.defineProperty(this,"id",{
+                        get:function(){
+                            return _id;
+                        },
+                        set:function(val){
+                            if(val){
+                                _id = val;
+                            }
+                        }
+                    });
+
+                    var _value = 0;
+                    Object.defineProperty(this,"value",{
+                        get:function(){ 
+                            return _value; 
+                        },
+                        set:function(val){
+                            if( !isNaN(val) && (val >=0) && (val <= 9) &&  (val != _value) ){
+                                if(val != _value) {
+                                    _value = val;
+                                    this.cellValueChanged();
+                                }
+                            }
+                            else if (val != _value)
+                            {
+                                throw "invalid value passed to cell " + this.id + "(" + val + ")";
+                            }
+                        }
+                    });
+  
+                    var _isGiven = false;
+                    Object.defineProperty(this,"isGiven", {
+                        get: function(){
+                            return _isGiven;
+                        },
+                        set: function(val){
+                            if(_isGiven != val) {
+                                _isGiven = val;
+                            }
+                        }
+                    })
+
+                    var _notes = [0,0,0,0,0,0,0,0,0];
+                    this.notes = function(note) {
+                        if(note == undefined){
+                            return _notes;
+                        }
+
+                        var i = note - 1;
+                        if( i > _notes.length) { throw "invalid note passed to cell " + this.id; }
+                        _notes[i] ? _notes[i] = false : _notes[i] = true;
+                        this.box.puzzle.render();
+                    }
+                    this.getNotes = function(){
+                        return _notes;
+                    }
+
+                    Object.defineProperty(this,"html",{
+                        get: function() {
+                            return this.buildMarkup();
+                        }
+                    })
+                    
+                    var _selected = false;
+                    Object.defineProperty(this,"selected",{
+                        get:function(){ 
+                            if(puzzle.selectedCell == undefined ) { return false; }
+                            if(puzzle.selectedCell.id == this.id){
+                                return true;
+                                console.log(this.id +  " is selected.");
+                            }
+                            return false;
+                        },
+                    });
+
+                    var _inSelectedRow = false;
+                    Object.defineProperty(this,"inSelectedRow",{
+                        get:function(){
+                            if(puzzle.selectedCell == undefined) { return false; }
+                            if(puzzle.selectedCell.getCellInfo().row == this.getCellInfo().row) {
+                                return true;
+                            }
+                            return false;
+                        }
+                    });
+
+                    var _inSelectedColumn = false;
+                    Object.defineProperty(this,"inSelectedColumn",{
+                        get: function(){
+                            if(puzzle.selectedCell == undefined) { return false; }
+                            if(puzzle.selectedCell.getCellInfo().col == this.getCellInfo().col) {
+                                return true
+                            }
+                            return false;
+                        }
+                    });
+
+                    var _inSelectedBox = false;
+                    Object.defineProperty(this,"inSelectedBox",{
+                        get: function(){
+                            if(puzzle.selectedCell == undefined) { return false; }
+                            if(puzzle.selectedCell.getCellInfo().box == this.getCellInfo().box) {
+                                return true;
+                            }
+                            return false;
+                        }
+                    });
+
+                    Object.defineProperty(this,"sameValueAsSelected", {
+                        get: function() {
+                            if (puzzle.selectedCell == undefined) { return false; }
+                            if (this.value == puzzle.selectedCell.value) { return true;}
+                            return false;
+                        }
+                    })
+
+                    this.select = function() {
+                        if(puzzle == undefined) { return; }
+                        puzzle.selectedCell = this;
+                    }
+
+                    this.getCellInfo = function() {
+                        let boxindex = this.box.puzzle.boxes.indexOf(this.box);
+                        let cellindex = this.box.cells.indexOf(this);
+
+                        let rowindex = 0;
+                        if( (boxindex==0) || (boxindex==1) || (boxindex==2) ) {
+                            if( (cellindex==0) || (cellindex==1) || (cellindex==2) ) {
+                                rowindex = 0;
+                            }
+                            else if ( (cellindex==3) || (cellindex==4) || (cellindex==5) ){
+                                rowindex = 1;   
+                            }
+                            else if ( (cellindex==6) || (cellindex==7) || (cellindex==8) ){
+                                rowindex = 2;
+                            }
+                        } 
+                        else if (boxindex == 3 || boxindex == 4 || boxindex == 5) {
+                            if( (cellindex==0) || (cellindex==1) || (cellindex==2) ) {
+                                rowindex = 3;
+                            }
+                            else if ( (cellindex==3) || (cellindex==4) || (cellindex==5) ){
+                                rowindex = 4;   
+                            }
+                            else if ( (cellindex==6) || (cellindex==7) || (cellindex==8) ){
+                                rowindex = 5;
+                            }
+                        } 
+                        else if (boxindex == 6 || boxindex == 7 || boxindex == 8) {
+                            if( (cellindex==0) || (cellindex==1) || (cellindex==2) ) {
+                                rowindex = 6;
+                            }
+                            else if ( (cellindex==3) || (cellindex==4) || (cellindex==5) ){
+                                rowindex = 7;   
+                            }
+                            else if ( (cellindex==6) || (cellindex==7) || (cellindex==8) ){
+                                rowindex = 8;
+                            }
+                        }
+
+                        let colindex = 0;
+                        if(boxindex == 0 || boxindex == 3 || boxindex == 6){
+                            if( (cellindex==0) || (cellindex==3) || (cellindex==6) ) {
+                                colindex = 0;
+                            }
+                            else if ( (cellindex==1) || (cellindex==4) || (cellindex==7) ){
+                                colindex = 1;   
+                            }
+                            else if ( (cellindex==2) || (cellindex==5) || (cellindex==8) ){
+                                colindex = 2;
+                            }
+                        }
+                        else if(boxindex == 1 || boxindex == 4 || boxindex ==7) {
+                            if( (cellindex==0) || (cellindex==3) || (cellindex==6) ) {
+                                colindex = 3;
+                            }
+                            else if ( (cellindex==1) || (cellindex==4) || (cellindex==7) ){
+                                colindex = 4;   
+                            }
+                            else if ( (cellindex==2) || (cellindex==5) || (cellindex==8) ){
+                                colindex = 5;
+                            }
+                        }
+                        else if(boxindex == 2 || boxindex == 5 || boxindex ==8) {
+                            if( (cellindex==0) || (cellindex==3) || (cellindex==6) ) {
+                                colindex = 6;
+                            }
+                            else if ( (cellindex==1) || (cellindex==4) || (cellindex==7) ){
+                                colindex = 7;   
+                            }
+                            else if ( (cellindex==2) || (cellindex==5) || (cellindex==8) ){
+                                colindex = 8;
+                            } 
+                        }
+                        
+                        return {row:rowindex,col:colindex,box:boxindex};  
+                    }
+
+                    this.getKeyIndex = function() {
+                        cellinfo = this.getCellInfo();
+                        return cellinfo.col * 9 + cellinfo.row;
+                    }
+
+                    this.buildMarkup = function() {
+                        var bgcolor = "ghostwhite";
+                        var fgcolor;
+
+                        if(this.value && this.sameValueAsSelected){
+                            bgcolor = "powderblue";
+                        }
+
+                        if(this.selected){
+                            bgcolor = "skyblue"
+                        } else if (this.inSelectedRow){
+                            bgcolor = "gainsboro";
+                        } else if (this.inSelectedColumn) {
+                            bgcolor = "gainsboro";
+                        } else if (this.inSelectedBox) {
+                            bgcolor = "gainsboro";
+                        }
+
+                        if( !this.selected && this.value != 0 && (this.inSelectedBox || this.inSelectedColumn || this.inSelectedRow) && this.sameValueAsSelected) {
+                            fgcolor = "red";
+                            bgcolor = "lightpink";
+                        }
+                        else {
+                            fgcolor = "black"
+                        }
+
+                        /*
+                            font-family: 'Nanum Pen Script', cursive;
+                            font-family: 'Permanent Marker', cursive;
+                            font-family: 'Righteous', cursive;
+                        */
+                       
+                        //Controls
+                        let font = "";
+                        if (this.isGiven){
+                            font = 'font-family: "Righteous", cursive;';
+                            fgcolor = "darkblue";
+                        }
+                        else {
+                            //font = 'font-family: "Permanent Marker", cursive;';
+                            font = 'font-family: "Nanum Pen Script", cursive;';
+                            fgcolor = "black";
+                        }
+
+                        if(this.value != 0 && this.value != Object.entries(k)[this.getKeyIndex()][1])
+                        {
+                            fgcolor = "red";
+                            bgcolor = "lightpink";
+                        }
+
+                        var style = "position:relative; box-sizing:border-box; float:left; width:33.3%; height:33.3%; color:" + fgcolor + "; background-color: " + bgcolor + "; border-bottom:black solid 1px; border-right:black solid 1px;"
+
+                        var opentag = "<div id='" + this.id + "' " + " style='" + style + "'>";
+                        var contents = "";
+                        var closetag = "</div>";  
+
+                        if (this.value > 0) {
+                            contents = "<div style='position: absolute; margin: 0; top: 50%; left: 50%; transform: translateX(-50%) translateY(-50%);'><p style='" + font + "font-size:10vw;margin:0;color:" + fgcolor + "'>" + this.value + "</p></div>";
+                        } 
+                        else {
+                            _notes.forEach(function(value,index){
+                                var alignment = "";
+                                switch(index) {
+                                    case 0: alignment = "left"; break;
+                                    case 1: alignment = "center"; break;
+                                    case 2: alignment = "right"; break;
+                                    case 3: alignment = "left"; break;
+                                    case 4: alignment = "center"; break;
+                                    case 5: alignment = "right"; break;
+                                    case 6: alignment = "left"; break;
+                                    case 7: alignment = "center"; break;
+                                    case 8: alignment = "right"; break;
+                                }
+
+                                var start = "<div style='display:table-cell; float:left; width:33.3%; height:33.3%; background-color: " + bgcolor + "; vertical-align: top; text-align: " + alignment + ";'>";
+                                var text = "";
+                                var end = "</div>";
+                                
+                                //here, I color the notes red if they are redundant (if you enter a 7 note on a row that has a 7 answer, for instance)
+                                if(value) {  //<-- here, value refers to a note value that has been entered as a placeholder or possibility.
+
+                                    font = 'font-family: "Nanum Pen Script", cursive;';
+                                    fgcolor = "black";
+
+                                    puzzle.boxes.forEach(function(box){
+                                        box.cells.forEach(function (cell){
+                                            if(this.inSelectedRow||this.inSelectedBox||this.inSelectedColumn){
+                                                if (cell.inSelectedColumn || cell.inSelectedRow || cell.inSelectedBox) {
+                                                    if(cell.value == index+1){
+                                                        fgcolor = "red";
+                                                        console.log("red", index+1, cell.value, cell.inSelectedRow, cell.inSelectedColumn, cell.inSelectedBox);
+                                                    }
+                                                }
+                                            }
+                                        })
+                                    });
+                                    
+
+                                    
+                                    text = "<p style='margin:0;" + font + " color: " + fgcolor + "; font-size:3vw;'>" + (index + 1) + "</p>";
+ 
+                                }
+                                contents += (start + text + end);
+                            });
+                        }                        
+
+                        return opentag + contents + closetag;
+                    } 
+
+                    this.cellValueChanged = function() { 
+                        let keyindex = this.getKeyIndex();
+                        answers[keyindex] = this.value;
+                        
+                        let selectedcell = this.box.puzzle.selectedcell;
+
+                        
+                        //here, I remove notes from other cells in the row, box, and column of the changed cell.
+                        //So if we enter a 7 in a cell, all the notes that indicate a 7 will be removed from cells
+                        //where the new value would override it.
+                        puzzle.boxes.forEach(function(box,i){
+                            box.cells.forEach(function(cell,j){
+                                if(cell != selectedcell && cell.value ==  0 && ( cell.inSelectedBox || cell.inSelectedColumn || cell.inSelectedRow ))
+                                {
+                                    let notes = cell.getNotes();
+                                    let selectedvalue = this.selectedCell.value;
+                                    if(selectedvalue > 0 && notes[selectedvalue - 1]){
+                                        cell.notes(selectedvalue);
+                                    }
+                                }
+                            },puzzle)
+                        },puzzle)
+                        
+
+                        this.puzzle.render();
+                    }
+
+                    $('body').on('click', "#" + this.id, function() {
+                        let divid = this.id;
+                        let lastdash = String(divid).lastIndexOf("_");
+                        let b = parseInt(divid[lastdash -1]) - 1;
+                        let c = parseInt(divid[lastdash +1]) - 1;
+                        cell = puzzle.boxes[b].cells[c];
+                        cell.select();
+                    });
+
+                    //$("body").off("click","[id^='btn']", "**");
+                    $("body").on("click", "#btn1", function () {puzzle.valueClicked(1);})
+                    $("body").on("click", "#btn2", function () {puzzle.valueClicked(2);})
+                    $("body").on("click", "#btn3", function () {puzzle.valueClicked(3);})
+                    $("body").on("click", "#btn4", function () {puzzle.valueClicked(4);})
+                    $("body").on("click", "#btn5", function () {puzzle.valueClicked(5);})
+                    $("body").on("click", "#btn6", function () {puzzle.valueClicked(6);})
+                    $("body").on("click", "#btn7", function () {puzzle.valueClicked(7);})
+                    $("body").on("click", "#btn8", function () {puzzle.valueClicked(8);})
+                    $("body").on("click", "#btn9", function () {puzzle.valueClicked(9);})
+                    $("body").on("click", "#btn0", function () {puzzle.valueClicked(0);})
+                    $("body").on("click", "#btnNotes", function() {Controls.addNotes = !Controls.addNotes;puzzle.render();})
+
+                        
+                }
+
+                /* controls */
+
+                var Controls = {
+                    
+                    addNotes: false,
+
+                    buildMarkup : function() {
+                        
+                        let img = "pen.jpg";
+                        if (this.addNotes) img = "pencil.jpg";
+                        let eraser = "eraser.png";
+                        let buttonwidth = 8.75;
+
+                        let style = "float:left; width:" + buttonwidth + "vw; left: 50%; font-size:10vw;margin:0;text-align:center;"
+                        //let font = 'font-family: "Permanent Marker", cursive; color: "darkblue";';
+                        let font = 'font-family: "Nanum Pen Script", cursive; color: "darkblue";';
+                        style += font;
+
+                        let html = ""
+
+                            html += "<div id='controls' style='width:97vw'>";
+                            html += "<div id='btnNotes' style='" + style + "'><p><img src='" + img + "' width='90%' height='90%'><p></div>";
+
+                            for(let i=1;i<=9;i++){
+                                html += markup(i);
+                            }
+                            
+                            html += "<div id='btn0' style='" + style + "'><p><img src='" + eraser + "' width='100%' height='100%'></p></div>";
+                            html += "</div>";
+
+                            return html;
+
+                            function markup(buttonval){
+                                let buttonwidth = 8.5; 
+                                let count = answers.filter(i => i === buttonval).length;
+                                let allUsed = count >= 9
+                                let style = "float:left; width:" + buttonwidth + "vw; left: 50%; font-size:10vw;margin:0;text-align:center;"
+                                let font = 'font-family: "Nanum Pen Script", cursive; ';
+                                if(allUsed){
+                                    font += 'color: white;';
+                                    $("body").off("click", "#btn" + buttonval, function () {puzzle.valueClicked(buttonval);});
+                                }
+                                else {
+                                    font += 'color: darkblue;';
+                                    $("body").on("click", "#btn" + buttonval, function () {puzzle.valueClicked(buttonval);});
+                                }
+                                let h = "<div id='btn" + buttonval + "' style='" + style + font + "'><p>" + buttonval + "</p></div>";
+                            
+                                return h;
+                                
+                            }
+                    },
+
+                    //const result = arrayToCount.filter(i => i === 2).length;   arrayToCount.filter(i => i === 2).length >= 9
+
+                    renderEvents : function() {
+                        this.eventsRendered = true;
+                    }
+
+                }
+
+                //puzzle setup
+                var puzzle = new PuzzleGrid("puzzle");
+                puzzle.render();
+
+                /*
+                $("body").off("click","[id^='btn']", "**");
+                $("body").on("click", "#btn1", function () {puzzle.valueClicked(1);})
+                $("body").on("click", "#btn2", function () {puzzle.valueClicked(2);})
+                $("body").on("click", "#btn3", function () {puzzle.valueClicked(3);})
+                $("body").on("click", "#btn4", function () {puzzle.valueClicked(4);})
+                $("body").on("click", "#btn5", function () {puzzle.valueClicked(5);})
+                $("body").on("click", "#btn6", function () {puzzle.valueClicked(6);})
+                $("body").on("click", "#btn7", function () {puzzle.valueClicked(7);})
+                $("body").on("click", "#btn8", function () {puzzle.valueClicked(8);})
+                $("body").on("click", "#btn9", function () {puzzle.valueClicked(9);})
+                $("body").on("click", "#btn0", function () {puzzle.valueClicked(0);})
+                $("body").on("click", "#btnNotes", function() {Controls.addNotes = !Controls.addNotes;puzzle.render();})
+                */
+                console.log($("body").click())
+
+                $("body").keydown(function(event){
+                    switch(event.which) {
+                        case 8 : puzzle.valueClicked(0);
+                        break;
+                        case 48 : puzzle.valueClicked(0);
+                        break;
+                        case 49 : puzzle.valueClicked(1);
+                        break;
+                        case 50 : puzzle.valueClicked(2);
+                        break;
+                        case 51 : puzzle.valueClicked(3);
+                        break;
+                        case 52 : puzzle.valueClicked(4);
+                        break;
+                        case 53 : puzzle.valueClicked(5);
+                        break;
+                        case 54 : puzzle.valueClicked(6);
+                        break;
+                        case 55 : puzzle.valueClicked(7);
+                        break;
+                        case 56 : puzzle.valueClicked(8);
+                        break;
+                        case 57 : puzzle.valueClicked(9);
+                        break;
+                    }
+                })
+                
+
+                //This is where the puzzle(p) is placed on the grid.
+                Object.entries(p).forEach(entry => {
+                    const[key,value] = entry;
+                    let c = key.charAt(0);
+                    let r = key.charAt(1);
+                    let col = 0;
+                    let row = parseInt(r) -1;
+                    let val = parseInt(value);
+
+                    switch(c) {
+                        case "A": col = 0; break;
+                        case "B": col = 1; break;
+                        case "C": col = 2; break;
+                        case "D": col = 3; break;
+                        case "E": col = 4; break;
+                        case "F": col = 5; break;
+                        case "G": col = 6; break;
+                        case "H": col = 7; break;
+                        case "I": col = 8; break;
+                    }
+
+                    let bc = puzzle.getBoxAndCell(row,col);
+                    let cell = puzzle.box(bc.box).cell(bc.cell);
+                    cell.isGiven = true;  //this flags the cell to be uneditable.
+                    cell.value = val;
+                })
+
+
+            });
+
+            var sudoku = (function() {
+
+
+            /*
+            // SUDOKU
+
+            // 2014 - Einar Egilsson
+
+            // This sudoku library is based HEAVILY on Peter Norvig's excellent Sudoku solver,
+            // available at http://norvig.com/sudoku.html.
+
+            // This library contains a solver, generator, serialization of puzzles
+            // and methods to get conflicts and hints for puzzles that are in progress.
+            // For a completely straight port of Norvig's solver, look at
+            // https://github.com/einaregilsson/sudoku.js/sudoku-norvig.js
+
+            // To see a better explanation of this library, look at the blog post
+            // at http://einaregilsson.com/sudoku and to see it in action try
+            // my Sudoku game at http://www.sudoku-webgame.com
+
+
+            // Start by setting up some basic datastructures and connections
+            // between them. Each row is numbered from 1-9, each column
+            // from A-I. Each square has an id like E4.
+
+            // Throughout this libarary we will often use the following variable names:
+
+            //    d - digit
+            //    r - row
+            //    c - column
+            //    s - square, e.g. E5
+            //    u - unit, e.g. one whole row, column or box of squares.
+
+            */
+
+            var ROWS 	= ['1','2','3','4','5','6','7','8','9']
+            , COLS 		= ['A','B','C','D','E','F','G','H','I']
+            , DIGITS		= '123456789'
+            , SQUARES 	= cross(COLS, ROWS) //Simple list of all squares, [A1, A2, ..., I9]
+            , UNITLIST 	= []  //List of all units. Each unit contains 9 squares. [ [A1,A2,...A9], [B1,B2,...,B9]...]
+            , UNITS		= {}  //Units organized by square. UNITS['A1'] = [ ['A1'...'A9'], ['A1'...'I1'], ['A1'...'C3']]
+            , PEERS		= {}; //For each square, the list of other square that share a unit with it. PEERS['A1'] = ['A1', 'A2' ... 'H1','I1']
+
+            var undefined;
+
+            for (var i=0; i<ROWS.length; i++) {
+                UNITLIST.push(cross(COLS, [ROWS[i]])); 
+            }
+
+            for (var i=0; i<COLS.length; i++) {
+                UNITLIST.push(cross([COLS[i]],ROWS)); 
+            }
+
+            var groupCols = ['ABC', 'DEF', 'GHI'];
+            var groupRows = ['123', '456', '789'];
+            for (var c=0;c<groupCols.length;c++) {
+                for (var r=0;r<groupRows.length;r++) {
+                    UNITLIST.push(cross(chars(groupCols[c]), chars(groupRows[r])));
+                }
+            }
+
+            for (var i=0; i<SQUARES.length;i++) {
+                var square 		= SQUARES[i]
+                , squarePeers = []
+                , squareUnits = [];
+                
+                for (var j=0; j<UNITLIST.length; j++) {
+                    var unit = UNITLIST[j];
+                    if (contains(unit, square)) {
+                        squareUnits.push(unit);
+                        for (var k=0; k<unit.length;k++) {
+                            if (!contains(squarePeers, unit[k]) && unit[k] !== square) {
+                                squarePeers.push(unit[k]);
+                            }
+                        }
+                    }
+                }
+                UNITS[square] = squareUnits;
+                PEERS[square] = squarePeers;
+            }
+
+            ///// Utility methods. /////
+
+            //Array.indexOf is not supported in old IEs
+            function vals(obj) {
+                var result = [];
+                for (var key in obj) {
+                    result.push(obj[key]);
+                }
+                return result;
+            }
+
+            function keys(obj) {
+                var result = [];
+                for (var key in obj) {
+                    result.push(key);
+                }
+                return result;
+            }
+
+            function each(list, func) {
+                filter(list, func);
+            }
+
+            function dict(keys, values) {
+                var result = {};
+                each(keys, function(i, key) {
+                    result[key] = values[i];
+                });
+                return result;
+            }
+
+            function print(s) {
+                console.log(s + '\r\n');
+            }
+
+            function all(list, func) {
+                for (var i=0; i < list.length; i++) {
+                    if (!func(list[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function any(list, func) {
+                for (var i=0; i < list.length; i++) {
+                    var result = func(list[i]);
+                    if (result) {
+                        return result;
+                    }
+                }
+                return false;
+            }
+
+            function filter(list, func) {
+                var result = [];
+                for (var i=0; i < list.length; i++) {
+                    if (func.length > 1 ) {
+                        if (func(i, list[i])) {
+                            result.push(list[i]);
+                        }
+                    } else if (func(list[i])) {
+                        result.push(list[i]);
+                    }
+                }
+                return result;
+            }
+
+            function sum(list) {
+                var result = 0;
+                each(list, function(l) {
+                    if (typeof l == 'number') {
+                        result += l;
+                    } else if (typeof l == 'boolean') {
+                        result += l ? 1 : 0;
+                    } else {
+                        throw 'Only numbers and booleans supported';
+                    }
+                });
+                return result;
+            }
+
+            function some(seq, func) {
+                //Return some element ofseq that is true.
+                for (var i=0; i < seq.length; i++) {
+                    var result = func(seq[i]);
+                    if (result) {
+                        return result;
+                    }
+                }
+                return false;
+            }
+
+            function first(list, func) {
+                var result = [];
+                for (var i=0; i < list.length; i++) {
+                    if (func.length > 1 ) {
+                        if (func(i, list[i])) {
+                            return list[i];
+                        }
+                    } else if (func(list[i])) {
+                        return list[i];
+                    }
+                }
+                return null;
+            }
+
+            function map(list, expr) {
+                var result = [];
+                each(list, function(value) {
+                    if (typeof expr === 'function') {
+                        result.push(expr(value));
+                    } else if (typeof expr === 'string') {
+                        result.push(value[expr]);
+                    }
+                });
+                return result;
+            }
+
+            function max(list, expr) {
+                var maxValue;
+                
+                each(list, function(value) {
+                    var candidate;
+                    if (typeof expr === 'undefined') {
+                        candidate = value;
+                    } else if (typeof expr === 'string') {
+                        candidate = value[expr];
+                    } else if (typeof expr === 'function') {
+                        candidate = expr(value);
+                    }
+                    
+                    if (typeof maxValue === 'undefined' || candidate > maxValue) {
+                        maxValue = candidate;
+                    }
+                });
+                return maxValue;
+            }
+
+            function min(list, expr) {
+                var minValue;
+                
+                each(list, function(value) {
+                    var candidate;
+                    if (typeof expr === 'undefined') {
+                        candidate = value;
+                    } else if (typeof expr === 'string') {
+                        candidate = value[expr];
+                    } else if (typeof expr === 'function') {
+                        candidate = expr(value);
+                    }
+                    
+                    if (typeof minValue === 'undefined' || candidate < minValue) {
+                        minValue = candidate;
+                    }
+                });
+                return minValue;
+            }
+
+            function randomElement(list) {
+                return list[Math.floor(Math.random() * list.length)];
+            }
+
+
+            //Array.indexOf is not supported in old IEs
+            function contains(list, val) {
+                return any(list, function(x) { return x === val; });
+            }
+
+            function set(list) {
+                var result = [];
+                each(list, function(val) {
+                    if (!contains(result, val)) {
+                        result.push(val);
+                    }
+                });
+                return result;
+            }
+
+            function concat() {
+                return Array.prototype.concat.apply([], arguments);
+            }
+
+            function repeat(str, times) {
+                return Array(times+1).join(str);
+            }
+
+            function center(str, width) {
+                var pad = width - str.length;
+                if (pad <= 0) {
+                    return str;
+                }
+                return repeat(' ', Math.floor(pad / 2)) 
+                    + str 
+                    + repeat(' ', Math.ceil(pad / 2));
+            }
+
+            function copy(board) {
+                return dict(keys(board), vals(board));
+            }
+
+            function randomInt (min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            function shuffle(seq) {
+                //Return a randomly shuffled copy of the input sequence.
+                seq = map(seq, function(x) { return x;});
+                //Fisher yates shuffle
+                var i = seq.length;
+                while (--i) {
+                    var j = Math.floor(Math.random() * (i + 1));
+                    var ival = seq[i];
+                    var jval = seq[j];
+                    seq[i] = jval;
+                    seq[j] = ival;
+                }
+                
+                return seq
+            }
+
+            function range(count) {
+                var result = [];
+                for (var i=0; i < count; i++) {
+                    result.push(i);
+                }
+                return result;
+            }
+
+            function chars(s) {
+                var result = [];
+                for (var i = 0; i < s.length; i++) {
+                    result.push(s.charAt(i));
+                }
+                return result;
+            }
+
+            function cross(a, b) {
+                var result = [];
+                for (var i=0; i<a.length;i++) {
+                    for (var j=0; j<b.length;j++) {
+                        result.push(a[i] + b[j]);
+                    }
+                }
+                return result;
+            }
+
+            function getHint(puzzle, values) {
+                if (!values) {
+                    throw { message : 'Values must be sent in'};
+                }
+                var solved = solve(puzzle);
+
+                var errorSquares = [];
+                // 1. Check if there are any wrong fields, Hint about those first
+                for (var s in values) {
+                    var guess = values[s];
+                    if (guess && guess !== solved[s]) {
+                        errorSquares.push(s);
+                    }
+                }
+
+                if (errorSquares.length > 0) {
+                    return {
+                        type : 'error',
+                        square : randomElement(errorSquares)
+                    };
+                }
+
+                // 2. Find a field that has only one possibility and give a hint about that.
+                var elimValues = {};
+                for (var s in solved) {
+                    elimValues[s] = DIGITS;
+                }
+
+                // One round of elimination only
+                for (var s in values) {
+                    elimValues[s] = values[s];
+                    var digit = values[s];
+                    var units = UNITS[s];
+                    for (var i = 0; i < PEERS[s].length; i++) {
+                        var elimSquare = PEERS[s][i];
+                        elimValues[elimSquare] = elimValues[elimSquare].replace(digit, '');
+                    }
+                }
+
+                var hintSquares = [];
+                for (var s in elimValues) {
+                    if (elimValues[s].length == 1 && !values[s]) {
+                        hintSquares.push(s);
+                    } 
+                }
+                if (hintSquares.length > 0) {
+                    return {
+                        type : 'squarehint',
+                        square : randomElement(hintSquares)
+                    }
+                }
+
+
+                var unitHints = [];
+                // 3. Is there a unit where one digit is only a possibility in one square?
+                for (var s in elimValues) {
+                    var value = elimValues[s];
+                    if (value.length == 1) {
+                        continue;
+                    }
+                    var units = UNITS[s];
+                    for (var i = 0; i < value.length; i++) {
+                        var d = value.charAt(i);
+                        for (var u =0; u < units.length; u++) {
+                            var unit = units[u];
+                            if (all(unit, function(s2) {
+                                return s2 == s || elimValues[s2].indexOf(d) == -1;
+                            })) {
+                                var unitType = 'box';
+                                if (unit[0].charAt(0) == unit[8].charAt(0)) {
+                                    unitType = 'row';
+                                } else if (unit[0].charAt(1) == unit[8].charAt(1)) {
+                                    unitType = 'column';
+                                }
+                                unitHints.push({
+                                    type : 'unithint',
+                                    unitType : unitType,
+                                    unit : unit,
+                                    digit : d
+                                });
+                            }
+                        }
+                    }
+                }
+
+                if (unitHints.length > 0) {
+                    return randomElement(unitHints);
+                }
+                
+                return {
+                    type : 'dontknow',
+                    squares : elimValues
+                };
+            }
+
+            function getConflicts(values) {
+                
+                var errors = [];	
+                for (var key in values) {
+                    var value = values[key] + '';
+                    if (!value || value.length > 1) {
+                        continue;
+                    }
+
+                    var units = UNITS[key];
+                    for (var i = 0; i < UNITS[key].length; i++) {
+                        var unit = UNITS[key][i];
+                        for (var j=0; j< unit.length; j++) {
+                            var otherKey = unit[j];
+                            var otherValue = values[otherKey] + '';
+                            
+                            if (otherKey != key && value == otherValue){
+                                errors.push({
+                                    unit : unit,
+                                    errorFields : [key, otherKey]
+                                });
+                            }
+                        }
+                    }
+                }
+                return errors;
+            }
+
+            function solve(grid, options) {
+                return search(parseGrid(grid), options);
+            }
+
+            function search(values, options) {
+                options = options || {};
+                options.chooseDigit = options.chooseDigit || 'random';
+                options.chooseSquare = options.chooseSquare || 'minDigits';
+
+                //Using depth-first search and propagation, try all possible values."
+                if (values === false) {
+                    return false; //Failed earlier
+                }
+
+                if (all(SQUARES, function(s) { return values[s].length == 1; })) {
+                    return values; // Solved!
+                }
+                
+                //Chose the unfilled square s with the fewest possibilities
+                var candidates = filter(SQUARES, function(s) { return values[s].length > 1; });
+                candidates.sort(function(s1,s2) { 
+                    if (values[s1].length != values[s2].length) {
+                        return values[s1].length - values[s2].length; 
+                    }
+                    if (s1 < s2) {
+                        return -1;
+                    } else {
+                        return 1;
+                    }
+
+                });
+
+                var s;
+                if (options.chooseSquare == 'minDigits') {
+                    s = candidates[0];
+                } else if (options.chooseSquare == 'maxDigits') {
+                    s = candidates[candidates.length-1];
+                } else if (options.chooseSquare == 'random') {
+                    s = candidates[Math.floor(Math.random()*candidates.length)];
+                }
+
+                var digitsLeft = chars(values[s]);
+                if (options.chooseDigit == 'max') {
+                    digitsLeft.reverse();
+                } else if (options.chooseDigit == 'random') {
+                    digitsLeft = shuffle(digitsLeft);
+                }
+
+                return some(digitsLeft, function(d) { return search(assign(copy(values), s, d), options) });
+            }
+
+            function isUnique(grid) {
+                var input = typeof grid === 'string' ? gridValues(grid) : grid;
+
+                var solved1 = solve(input, { chooseDigit : 'min'});
+                var solved2 = solve(input, { chooseDigit : 'max'});
+                if (!solved1 || !solved2) {
+                    throw 'Failed to solve';
+                }
+
+                for (var s in solved1) {
+                    if (solved2[s] != solved1[s]) {
+                        return false;
+                    }
+                }
+                return true;
+
+            }
+
+            function serialize(values) {
+                var serialized = '';
+                for (var i=0; i< SQUARES.length; i++) {
+                    serialized += values[SQUARES[i]] || 'x';
+                }
+                serialized = serialized.replace(/xxxxxx/g, 'f')
+                                        .replace(/xxxxx/g, 'e')
+                                        .replace(/xxxx/g, 'd')
+                                        .replace(/xxx/g, 'c')
+                                        .replace(/xx/g, 'b')
+                                        .replace(/x/g, 'a');
+                return serialized;
+            }
+
+            function deserialize(serialized) {
+                var values = {};
+                serialized = serialized.replace(/f/g, 'xxxxxx')
+                                        .replace(/e/g, 'xxxxx')
+                                        .replace(/d/g, 'xxxx')
+                                        .replace(/c/g, 'xxx')
+                                        .replace(/b/g, 'xx')
+                                        .replace(/a/g, 'x');
+                
+                for (var i=0; i< SQUARES.length; i++) {
+                    if (serialized.charAt(i) != 'x') {
+                        values[SQUARES[i]] = serialized.charAt(i);
+                    }
+                }
+                return values;
+            }
+
+            function isSolvableWithElimination(grid) {
+                return isSolved(parseGrid(grid));
+            }
+
+            function isSolved(values) {
+                for (var s in values) {
+                    if (values[s].length > 1) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function squareCount(difficulty) {
+                if (difficulty == 'easy') {
+                    return 35;
+                } else if (difficulty == 'medium') {
+                    return 28;
+                }
+                return 20;
+            }
+
+            function generate(difficulty) {
+                var start = new Date().getTime();
+                var minSquares = squareCount(difficulty || 'easy');
+                
+                var fullGrid = solve({});
+                var generatedGrid = copy(fullGrid);
+                var shuffledSquares = shuffle(SQUARES);
+                var filledSquares = shuffledSquares.length;
+
+                for (var i = 0; i < shuffledSquares.length; i++) {
+                    var s = shuffledSquares[i];
+
+                    delete generatedGrid[s];
+                    filledSquares--;
+                    if (!isSolvableWithElimination(generatedGrid) || !isUnique(generatedGrid)) {
+                        generatedGrid[s] = fullGrid[s];
+                        filledSquares++;
+                    }
+
+                    if (filledSquares === minSquares) {
+                        break;
+                    }
+
+                }
+                var time = new Date().getTime() - start;
+                debug('Generated puzzle with ' + keys(generatedGrid).length + ' squares in ' + time + 'ms');
+                return generatedGrid;
+            }
+
+            function parseGrid(grid) {
+                //Convert grid to a dict of possible values, {square: digits}, or
+                //return false if a contradiction is detected
+
+                // To start, every square can be any digit; then assign values from the grid.
+                var values = {}; 
+                each(SQUARES, function(s) { values[s] = DIGITS; });
+                
+
+                var input = typeof grid === 'string' ? gridValues(grid) : grid;
+                for (var s in input) {
+                    var d = input[s];
+                    if (!assign(values, s, d)) {
+                        return false; // (Fail if we can't assign d to square s.)
+                    }
+                }
+                return values;	
+            }
+
+            function gridValues(grid) {
+                //Convert grid into a dict of {square: char} with '0' or '.' for empties.
+                grid = grid.replace(/[^0-9\.]/g, '');
+                var input = {};
+                for (var i = 0; i < SQUARES.length; i++){
+                    var val = grid[i];
+                    if (DIGITS.indexOf(val) != -1) {
+                        input[SQUARES[i]] = val;
+                    }
+                }
+                return input;
+            }
+
+            //################ Constraint Propagation ################
+
+            function assign(values, s, d) {
+                //Eliminate all the other values (except d) from values[s] and propagate.
+                //Return values, except return false if a contradiction is detected.
+                var otherValues = values[s].replace(d, '');
+                if (all(chars(otherValues), function(d2) { return eliminate(values, s, d2); })) {
+                    return values;
+                } else {
+                    return false;
+                }
+            }
+
+            function eliminate(values, s, d) {
+                //Eliminate d from values[s]; propagate when values or places <= 2.
+                //return values, except return false if a contradiction is detected.
+                
+                if (values[s].indexOf(d) == -1) {
+                    return values; //Already eliminated
+                }
+                
+                values[s] = values[s].replace(d, '');
+                // (1) If a square s is reduced to one value d2, then eliminate d2 from the peers.
+                if (values[s].length == 0) {
+                    return false; //Contradiction: removed last value
+                } else if (values[s].length == 1) {
+                    var d2 = values[s];
+                    if (!all(PEERS[s], function(s2) { return eliminate(values, s2, d2); })) {
+                        return false;
+                    }
+                }
+                // (2) If a unit u is reduced to only one place for a value d, then put it there.
+                for (var i=0; i < UNITS[s].length; i++) {
+                    var u = UNITS[s][i];
+                    var dplaces = filter(u, function(s2) { return values[s2].indexOf(d) != -1; });
+                    if (dplaces.length == 0) {
+                        return false; //Contradiction: no place for this value
+                    } else if (dplaces.length == 1) {
+                        // d can only be in one place in unit; assign it there
+                        if (!assign(values, dplaces[0], d)) {
+                            return false;
+                        }
+                    }
+                }
+
+                return values;
+            }
+
+            var module = {
+                solve : solve,
+                getConflicts : getConflicts,
+                getHint : getHint,
+                isUnique : isUnique,
+                generate : generate,
+                serialize : serialize,
+                deserialize : deserialize,
+                debug : false,
+                test : parseGrid,
+                unitList : UNITLIST
+            };
+
+            function debug(msg) {
+                if (module.debug) {
+                    print(msg);
+                }
+            }
+
+            return module;
+            })();
+
+            if (typeof exports !== 'undefined') {
+            for (var i in sudoku) {
+                exports[i] = sudoku[i];
+            }
+            }
+       </script>
+    </head>
+    <body>
+
+    </body>
+</html>
